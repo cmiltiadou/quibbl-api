@@ -4,8 +4,10 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 
 // require route files
-const exampleRoutes = require('./app/routes/example_routes')
+const quibblRoutes = require('./app/routes/quibbl_routes')
 const userRoutes = require('./app/routes/user_routes')
+const replyRoutes = require('./app/routes/reply_routes')
+const tagRoutes = require('./app/routes/tag_routes')
 
 // require middleware
 const errorHandler = require('./lib/error_handler')
@@ -19,6 +21,7 @@ const db = require('./config/db')
 // require configured passport authentication middleware
 const auth = require('./lib/auth')
 
+
 // define server and client ports
 // used for cors and local port declaration
 const serverDevPort = 8000
@@ -30,6 +33,11 @@ const clientDevPort = 3000
 mongoose.connect(db, {
 	useNewUrlParser: true,
 })
+
+mongoose.connection.once('open', () => {
+	console.log(`Connected to MongoDB at ${mongoose.connection.host}:${mongoose.connection.port}`)
+})
+
 
 // instantiate express application object
 const app = express()
@@ -65,8 +73,10 @@ app.use(express.urlencoded({ extended: true }))
 app.use(requestLogger)
 
 // register route files
-app.use(exampleRoutes)
+app.use(quibblRoutes)
 app.use(userRoutes)
+app.use(replyRoutes)
+app.use(tagRoutes)
 
 // register error handling middleware
 // note that this comes after the route middlewares, because it needs to be

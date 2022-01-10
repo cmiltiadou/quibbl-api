@@ -16,6 +16,7 @@ const BadParamsError = errors.BadParamsError
 const BadCredentialsError = errors.BadCredentialsError
 
 const User = require('../models/user')
+const quibbl = require('../models/quibbl')
 
 // passing this as a second argument to `router.<verb>` will make it
 // so that a token MUST be passed for that route to be available
@@ -24,6 +25,18 @@ const requireToken = passport.authenticate('bearer', { session: false })
 
 // instantiate a router (mini app that only handles routes)
 const router = express.Router()
+
+// PROFILE
+// GET /profile using just the user model and populate.
+router.get('/profile', requireToken, (req, res, next) => {
+	User.findOne({ _id: req.user.id })
+		// .populate({ path: 'quibbls', select: ['title', 'description'] })
+		// .populate('answers')
+		// respond with status 200 and JSON of the quibbls
+		.then((foundUser) => res.status(200).json(foundUser))
+		// if an error occurs, pass it to the handler
+		.catch(next)
+})
 
 // SIGN UP
 // POST /sign-up
@@ -46,7 +59,10 @@ router.post('/sign-up', (req, res, next) => {
 		.then((hash) => {
 			// return necessary params to create a user
 			return {
+				firstName: req.body.credentials.firstName,
+				lastName: req.body.credentials.lastName,
 				email: req.body.credentials.email,
+				userName: req.body.credentials.userName,
 				hashedPassword: hash,
 			}
 		})
@@ -67,6 +83,8 @@ router.post('/sign-in', (req, res, next) => {
 
 	// find a user based on the email that was passed
 	User.findOne({ email: req.body.credentials.email })
+		.populate({ path: 'quibbls'})
+		.populate('replies')
 		.then((record) => {
 			// if we didn't find a user with that email, send 401
 			if (!record) {
@@ -143,4 +161,13 @@ router.delete('/sign-out', requireToken, (req, res, next) => {
 		.catch(next)
 })
 
+// testing display all users
+router.get('/', (req, res, next) => {
+	User.find()
+		.then(users => res.status(200).json({ users }))
+		.catch(next)
+})
+
 module.exports = router
+
+
