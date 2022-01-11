@@ -4,6 +4,7 @@ const express = require('express')
 const passport = require('passport')
 // pull in Mongoose model for quibbls
 const Quibbl = require('../models/quibbl')
+const Tag = require('../models/tag')
 // this is a collection of methods that help us detect situations when we need
 // to throw a custom error
 const customErrors = require('../../lib/custom_errors')
@@ -24,6 +25,7 @@ const router = express.Router()
 
 // instantiate html sanitizer
 const sanitizeHtml = require('sanitize-html')
+const tag = require('../models/tag')
 
 // INDEX
 // GET /quibbls
@@ -31,6 +33,7 @@ router.get('/quibbls', (req, res, next) => {
 	Quibbl.find()
 		.populate('owner', ['userName'])
 		.populate('tags', ['description'])
+		.populate('replies', ['reply'])
 		.then(handle404)
 		.then(foundQuibbls => {
 			// `quibbls` will be an array of Mongoose documents
@@ -61,7 +64,7 @@ router.get('/quibbls/user', requireToken, (req, res, next) => {
 // // GET /quibbls/5a7db6c74d55bc51bdf39793
 router.get('/quibbls/:id', (req, res, next) => {
 	// req.params.id will be set based on the `:id` in the route
-	quibbl.findById(req.params.id)
+	Quibbl.findById(req.params.id)
 		// use the quibblId to populate the corresponding owner
 		.populate('owner', ['firstName', 'lastName'])
 		.then(handle404)
@@ -77,20 +80,52 @@ router.post('/quibbls', requireToken, (req, res, next) => {
 	// set owner of new quibbl to be current user
 	req.body.quibbl.owner = req.user.id
 	let currentUser = req.user
-	console.log('this is req.user', req.user)
-
-	// sanitize quibbl.description html
+	
+	
 	req.body.quibbl.description = sanitizeHtml(req.body.quibbl.description)
-
 	Quibbl.create(req.body.quibbl)
 		// respond to succesful `create` with status 201 and JSON of new "quibbl"
-		.then((quibbl) => {
+		.then((quibbl, tag) => {
 			// push created quibbl id into the current users quibbl arr of obj ref
 			currentUser.quibbls.push(quibbl._id)
 			// save the current user
 			currentUser.save()
+
+			
+			// tag2.quibbls.push(quibbl._id)
+			// tag2.save()
+			// tag3.quibbls.push(quibbl._id)
+			// tag3.save()
+			// // quibbl.tags.quibbls.push(quibbl._id)
+			// quibbl.tags.save()
+
 			res.status(201).json({ quibbl: quibbl.toObject() })
+			return quibbl
 		})
+		.then((quibbl) => {
+				Tag.find()
+					.where('_id')
+					.in([quibbl.tags[0], quibbl.tags[1], quibbl.tags[2]])
+					.then((tags)=>{
+					console.log(tags[0])
+					tags[0].quibbls.push(quibbl._id)
+					tags[0].save()
+					
+					if (tags[1] !== undefined){
+						tags[1].quibbls.push(quibbl._id)
+						tags[1].save()
+					}else{return}
+
+					if (tags[2] !== undefined){
+						tags[2].quibbls.push(quibbl._id)
+						tags[2].save()
+					}else{return}
+					
+				})
+				
+			})
+		
+		
 		// if an error occurs, pass it off to our error handler
 		// the error handler needs the error message and the `res` object so that it
 		// can send an error message back to the client

@@ -4,12 +4,14 @@ const passport = require('passport')
 const Tag = require('../models/tag')
 const customErrors = require('../../lib/custom_errors')
 const handle404 = customErrors.handle404
-const requireToken = passport.authenticate('bearer', { session: false })
+
+// may add requireToken in the future
+// const requireToken = passport.authenticate('bearer', { session: false })
 
 
 
 
-// get/index route for all Replies to a specific quibbl
+// get/index route for all tags
 router.get('/tags', (req, res, next) => {
     Tag.find()
         .then(handle404)
