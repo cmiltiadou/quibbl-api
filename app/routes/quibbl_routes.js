@@ -81,8 +81,18 @@ router.post('/quibbls', requireToken, (req, res, next) => {
 	req.body.quibbl.owner = req.user.id
 	let currentUser = req.user
 	
-	
-	req.body.quibbl.description = sanitizeHtml(req.body.quibbl.description)
+	// we'll whitelist some html tags to allow, images, and youtube videos to be embedded
+	req.body.quibbl.description = sanitizeHtml(req.body.quibbl.description,{
+		allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe']),
+		allowedAttributes: {
+			'iframe': ['src'],
+			a: [ 'href', 'name', 'target' ],
+			img: [ 'src' ]
+		  },
+		allowedIframeHostnames: ['www.youtube.com'],
+
+	})
+
 	Quibbl.create(req.body.quibbl)
 		// respond to succesful `create` with status 201 and JSON of new "quibbl"
 		.then((quibbl, tag) => {
@@ -90,8 +100,6 @@ router.post('/quibbls', requireToken, (req, res, next) => {
 			currentUser.quibbls.push(quibbl._id)
 			// save the current user
 			currentUser.save()
-
-			
 			// tag2.quibbls.push(quibbl._id)
 			// tag2.save()
 			// tag3.quibbls.push(quibbl._id)
@@ -105,7 +113,7 @@ router.post('/quibbls', requireToken, (req, res, next) => {
 		.then((quibbl) => {
 				Tag.find()
 					.where('_id')
-					.in([quibbl.tags[0], quibbl.tags[1], quibbl.tags[2]])
+					.in([quibbl.tags[0], quibbl.tags[1]])
 					.then((tags)=>{
 					console.log(tags[0])
 					tags[0].quibbls.push(quibbl._id)
