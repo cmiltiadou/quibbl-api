@@ -32,7 +32,7 @@ const tag = require('../models/tag')
 router.get('/quibbls', (req, res, next) => {
 	Quibbl.find()
 		.populate('owner', ['userName'])
-		.populate('tags', ['description'])
+		.populate('tags', ['description', 'color'])
 		.populate('replies', ['reply'])
 		.then(handle404)
 		.then(foundQuibbls => {

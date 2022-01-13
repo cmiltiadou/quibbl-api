@@ -38,8 +38,8 @@ router.get('/:quibblId/replies', (req, res, next) => {
 
 // post route to add an reply
 router.post('/:quibblId/replies', requireToken, (req, res, next) => {
-    // set contributor of reply to be the current user 
-    req.body.reply.contributor = req.user.id
+    // set owner of reply to be the current user 
+    req.body.reply.owner = req.user.id
     // set quibbl of reply to be the quibbl id from the url param
     req.body.reply.quibbl = req.params.quibblId
     // console.log('is this the quibbl id:', req.body.reply.quibbl)
@@ -68,7 +68,7 @@ router.post('/:quibblId/replies', requireToken, (req, res, next) => {
         .catch(next)
 })
 
-// patch route to edit an reply
+// patch route to edit a reply
 router.patch('/replies/:id', requireToken, removeBlanks, (req, res, next) => {
     delete req.body.reply.owner
 
@@ -82,7 +82,27 @@ router.patch('/replies/:id', requireToken, removeBlanks, (req, res, next) => {
         .catch(next)
 })
 
-// delete route for an reply
+// patch route to add an upvote to a reply
+router.patch('/replies/:id/vote', removeBlanks, (req, res, next) => {
+
+    Reply.findById(req.params.id)
+        .then(handle404)
+        .then(foundReply => {
+            console.log('this if found reply\n', foundReply)
+            if(foundReply.votes.includes(req.body.reply.votes) == false){
+            foundReply.votes.push(req.body.reply.votes)
+            return foundReply.save()
+            }else{
+                foundReply.votes.pull(req.body.reply.votes)
+                return foundReply.save()
+            }
+
+        })
+        .then(() => res.sendStatus(204))
+        .catch(next)
+})
+
+// delete route for a reply
 router.delete('/replies/:replyId', requireToken, (req, res, next) => {
     id = req.params.replyId
     console.log(id)

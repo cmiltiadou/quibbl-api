@@ -1,6 +1,14 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
+// const voteSchema = new mongoose.Schema({
+//     voters: [{
+//         type: Schema.Types.ObjectId,
+//         ref: 'User'
+//     }],    
+// })
+
+
 const replySchema = new mongoose.Schema(
     {
         reply: {
@@ -11,6 +19,9 @@ const replySchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        votes: [{
+            type: String,
+        }],
         owner: {
             type: Schema.Types.ObjectId,
             ref: 'User'
